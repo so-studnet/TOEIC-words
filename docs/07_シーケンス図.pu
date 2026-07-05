@@ -1,0 +1,52 @@
+@startuml sequence
+actor ユーザー as User
+participant "ブラウザ\n(JavaScript)" as FE
+participant "APIサーバー\n(Spring Boot)" as BE
+database "SQLite" as DB
+
+== ログイン ==
+User -> FE : メールアドレス/パスワードを入力
+FE -> BE : POST /api/auth/login
+BE -> DB : ユーザー照会(email)
+DB --> BE : ユーザー情報(password_hash)
+BE -> BE : パスワード照合
+BE --> FE : 200 OK + セッションCookie
+FE --> User : S1(ホーム/レベル選択)へ遷移
+
+== レベル選択・出題 ==
+User -> FE : レベルを選択(例:600)
+FE -> BE : GET /api/words?level=600
+BE -> DB : 該当レベルの単語からランダムに10件取得
+DB --> BE : 単語10件
+BE --> FE : 単語セット(JSON)
+FE --> User : 1問目を表示(例文穴埋め)
+
+loop 10問繰り返し
+  opt ヒントを使う(任意・複数可)
+    User -> FE : ヒントボタン押下\n(定義/類義語/発音/シャッフル/イラスト)
+    FE --> User : ヒント内容を表示\n(使用種類をクライアント側で記録)
+  end
+
+  User -> FE : 解答を入力して送信
+  FE -> FE : 類似度を即時計算\n(重み付きダメラウ・レーベンシュタイン距離)
+  FE --> User : 類似度%を即時表示
+  FE -> BE : POST /api/quiz/answer\n(wordId, answer, hintsUsed)
+  BE -> BE : 類似度・正誤を再計算\n(改ざん防止のため再計算)
+  BE -> BE : 習熟度の加算/減算量を算出\n(ヒントペナルティ反映)
+  BE -> DB : user_word_mastery を更新
+  DB --> BE : 更新後の習熟度
+  BE --> FE : 正誤/類似度/習熟度変化(JSON)
+  FE --> User : 結果オーバーレイ(S3)を表示
+end
+
+FE --> User : 10問終了 → S1(ホーム)へ戻る
+
+== 習熟度確認(任意) ==
+User -> FE : 「単語一覧を見る」を選択
+FE -> BE : GET /api/mastery
+BE -> DB : user_word_mastery を単語ごとに取得
+DB --> BE : 習熟度一覧
+BE --> FE : 習熟度一覧(ランク付き)
+FE --> User : S4(単語一覧/習熟度)を表示
+
+@enduml

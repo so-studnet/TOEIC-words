@@ -1,0 +1,40 @@
+@startuml usecase
+left to right direction
+skinparam packageStyle rectangle
+
+actor ユーザー as user
+
+rectangle "英単語穴埋めクイズWebアプリ" {
+  usecase "新規登録する" as UC_Register
+  usecase "ログインする" as UC_Login
+  usecase "ログアウトする" as UC_Logout
+  usecase "レベルを選択する\n(400/600/800/900+)" as UC_SelectLevel
+  usecase "クイズに解答する" as UC_Answer
+  usecase "類似度を確認する" as UC_Similarity
+  usecase "ヒントを使う" as UC_Hint
+  usecase "定義を見る" as UC_HintDef
+  usecase "類義語を見る" as UC_HintSyn
+  usecase "発音を聞く" as UC_HintPron
+  usecase "文字をシャッフルして見る" as UC_HintShuffle
+  usecase "イメージイラストを見る" as UC_HintImage
+  usecase "習熟度を確認する" as UC_Mastery
+}
+
+user --> UC_Register
+user --> UC_Login
+user --> UC_Logout
+user --> UC_SelectLevel
+user --> UC_Answer
+user --> UC_Mastery
+
+UC_SelectLevel .> UC_Answer : <<include>>
+UC_Answer .> UC_Similarity : <<include>>
+UC_Answer .> UC_Hint : <<extend>>
+
+UC_HintDef .up.|> UC_Hint
+UC_HintSyn .up.|> UC_Hint
+UC_HintPron .up.|> UC_Hint
+UC_HintShuffle .up.|> UC_Hint
+UC_HintImage .up.|> UC_Hint
+
+@enduml
