@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英単語穴埋めクイズ</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- S0: ログイン / 新規登録 -->
+<section id="screen-login" class="screen">
+  <div class="card">
+    <h1>英単語穴埋めクイズ</h1>
+    <div class="tabs">
+      <button type="button" class="tab-btn active" data-tab="login">ログイン</button>
+      <button type="button" class="tab-btn" data-tab="register">新規登録</button>
+    </div>
+
+    <form id="login-form" class="tab-panel active">
+      <label>メールアドレス
+        <input type="email" id="login-email" required>
+      </label>
+      <label>パスワード
+        <input type="password" id="login-password" required>
+      </label>
+      <p class="error" id="login-error"></p>
+      <button type="submit" class="primary">ログイン</button>
+    </form>
+
+    <form id="register-form" class="tab-panel">
+      <label>メールアドレス
+        <input type="email" id="register-email" required>
+      </label>
+      <label>パスワード(8文字以上)
+        <input type="password" id="register-password" required>
+      </label>
+      <label>パスワード確認
+        <input type="password" id="register-password-confirm" required>
+      </label>
+      <p class="error" id="register-error"></p>
+      <button type="submit" class="primary">新規登録</button>
+    </form>
+  </div>
+</section>
+
+<!-- S1: ホーム / レベル選択 -->
+<section id="screen-home" class="screen">
+  <div class="card wide">
+    <div class="topbar">
+      <h1>ホーム</h1>
+      <button type="button" id="logout-btn" class="link">ログアウト</button>
+    </div>
+    <p>学習するレベルを選んでください(1セッション10問)</p>
+    <div class="level-grid">
+      <button type="button" class="level-btn" data-level="400">400</button>
+      <button type="button" class="level-btn" data-level="600">600</button>
+      <button type="button" class="level-btn" data-level="800">800</button>
+      <button type="button" class="level-btn" data-level="900">900+</button>
+    </div>
+    <button type="button" id="goto-mastery-btn" class="secondary">単語一覧を見る</button>
+  </div>
+</section>
+
+<!-- S2: クイズ画面 -->
+<section id="screen-quiz" class="screen">
+  <div class="card wide">
+    <div class="topbar">
+      <span id="quiz-progress"></span>
+      <span id="quiz-hint-count"></span>
+    </div>
+
+    <p id="quiz-example" class="example"></p>
+
+    <form id="quiz-form">
+      <input type="text" id="quiz-answer" autocomplete="off" placeholder="英単語を入力" required>
+      <p class="error" id="quiz-error"></p>
+      <button type="submit" class="primary">解答する</button>
+    </form>
+
+    <div class="hint-buttons">
+      <button type="button" class="hint-btn" data-hint="definition">定義</button>
+      <button type="button" class="hint-btn" data-hint="synonyms">類義語</button>
+      <button type="button" class="hint-btn" data-hint="pronunciation">発音</button>
+      <button type="button" class="hint-btn" data-hint="shuffle">シャッフル文字</button>
+      <button type="button" class="hint-btn" data-hint="image">イメージイラスト</button>
+    </div>
+
+    <div id="hint-content"></div>
+  </div>
+
+  <!-- S3: 結果表示(オーバーレイ) -->
+  <div id="result-overlay" class="overlay hidden">
+    <div class="card">
+      <h2 id="result-title"></h2>
+      <p id="result-input"></p>
+      <p id="result-correct-word"></p>
+      <p id="result-similarity"></p>
+      <p id="result-mastery"></p>
+      <button type="button" id="next-btn" class="primary">次へ</button>
+    </div>
+  </div>
+</section>
+
+<!-- S4: 単語一覧 / 習熟度 -->
+<section id="screen-mastery" class="screen">
+  <div class="card wide">
+    <div class="topbar">
+      <h1>単語一覧 / 習熟度</h1>
+      <button type="button" id="back-home-btn" class="link">ホームへ戻る</button>
+    </div>
+    <div class="mastery-controls">
+      <label>レベル
+        <select id="mastery-level-filter">
+          <option value="">すべて</option>
+          <option value="400">400</option>
+          <option value="600">600</option>
+          <option value="800">800</option>
+          <option value="900">900+</option>
+        </select>
+      </label>
+      <label>並び替え
+        <select id="mastery-sort">
+          <option value="mastery-asc">習熟度が低い順</option>
+          <option value="alpha">アルファベット順</option>
+          <option value="recent">最終学習日順</option>
+        </select>
+      </label>
+    </div>
+    <div id="mastery-list"></div>
+  </div>
+</section>
+
+<script src="js/similarity.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
