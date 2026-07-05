@@ -1,0 +1,166 @@
+@startuml class
+skinparam classAttributeIconSize 0
+
+package "controller" {
+  class AuthController {
+    +register(req: RegisterRequest): UserResponse
+    +login(req: LoginRequest): UserResponse
+    +logout(): void
+  }
+  class WordController {
+    +getWords(level: int): List<WordDto>
+  }
+  class QuizController {
+    +answer(req: AnswerRequest): AnswerResponse
+  }
+  class MasteryController {
+    +getMastery(level: int): List<MasteryDto>
+  }
+}
+
+package "service" {
+  class AuthService {
+    +register(email: String, rawPassword: String): User
+    +login(email: String, rawPassword: String): User
+  }
+  class QuizService {
+    +getWordsForLevel(level: int, count: int): List<Word>
+    +submitAnswer(userId: long, wordId: long, answer: String, hintsUsed: Set<HintType>): AnswerResult
+  }
+  class MasteryService {
+    +getMasteryList(userId: long, level: Integer): List<MasteryDto>
+  }
+  class SimilarityCalculator {
+    +calculate(input: String, correct: String): int
+    -weightedDamerauLevenshtein(a: String, b: String): double
+  }
+  class MasteryCalculator {
+    +calculateGain(hintsUsed: Set<HintType>): int
+    +calculateLoss(similarityPercent: int): int
+  }
+}
+
+package "repository" {
+  interface UserRepository {
+    +findByEmail(email: String): Optional<User>
+  }
+  interface WordRepository {
+    +findRandomByLevel(level: int, count: int): List<Word>
+  }
+  interface UserWordMasteryRepository {
+    +findByUserIdAndWordId(userId: long, wordId: long): Optional<UserWordMastery>
+    +findByUserId(userId: long): List<UserWordMastery>
+  }
+}
+
+package "domain" {
+  class User {
+    -id: Long
+    -email: String
+    -passwordHash: String
+    -createdAt: String
+  }
+  class Word {
+    -id: Long
+    -word: String
+    -level: int
+    -definition: String
+    -example: String
+    -synonyms: String
+    -imageUrl: String
+  }
+  class UserWordMastery {
+    -userId: Long
+    -wordId: Long
+    -mastery: int
+    -attempts: int
+    -correctCount: int
+    -hintsUsedTotal: int
+    -lastStudied: String
+  }
+  enum HintType {
+    DEFINITION
+    SYNONYMS
+    PRONUNCIATION
+    SHUFFLE
+    IMAGE
+    +penalty: double
+  }
+}
+
+package "dto" {
+  class RegisterRequest {
+    +email: String
+    +password: String
+  }
+  class LoginRequest {
+    +email: String
+    +password: String
+  }
+  class AnswerRequest {
+    +wordId: long
+    +answer: String
+    +hintsUsed: Set<HintType>
+  }
+  class AnswerResponse {
+    +correct: boolean
+    +similarityPercent: int
+    +correctWord: String
+    +masteryBefore: int
+    +masteryAfter: int
+    +masteryDelta: int
+  }
+  class WordDto {
+    +id: long
+    +word: String
+    +definition: String
+    +example: String
+    +synonyms: List<String>
+    +imageUrl: String
+  }
+  class MasteryDto {
+    +wordId: long
+    +word: String
+    +level: int
+    +mastery: int
+    +rank: String
+    +attempts: int
+    +correctCount: int
+    +hintsUsedTotal: int
+    +lastStudied: String
+  }
+}
+
+AuthController --> AuthService
+AuthController ..> RegisterRequest
+AuthController ..> LoginRequest
+
+WordController --> QuizService
+WordController ..> WordDto
+
+QuizController --> QuizService
+QuizController ..> AnswerRequest
+QuizController ..> AnswerResponse
+
+MasteryController --> MasteryService
+MasteryController ..> MasteryDto
+
+AuthService --> UserRepository
+UserRepository ..> User
+
+QuizService --> WordRepository
+QuizService --> UserWordMasteryRepository
+QuizService --> SimilarityCalculator
+QuizService --> MasteryCalculator
+WordRepository ..> Word
+UserWordMasteryRepository ..> UserWordMastery
+
+MasteryService --> UserWordMasteryRepository
+
+AnswerRequest --> HintType
+MasteryCalculator --> HintType
+
+User "1" -- "0..*" UserWordMastery
+Word "1" -- "0..*" UserWordMastery
+
+@enduml
