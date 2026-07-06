@@ -50,25 +50,34 @@ public class QuizService {
                 .collect(Collectors.toMap(UserWordMastery::getWord, Function.identity()));
 
         Instant now = Instant.now();
-        List<Word> due = new ArrayList<>();
+        List<Word> overdue = new ArrayList<>();
+        List<Word> newWords = new ArrayList<>();
         List<Word> notDue = new ArrayList<>();
         for (Word word : words) {
-            if (fsrsScheduler.isDue(masteryByWordId.get(word.getId()), now)) {
-                due.add(word);
-            } else {
-                notDue.add(word);
+            switch (fsrsScheduler.categorize(masteryByWordId.get(word.getId()), now)) {
+                case LEARNING, REVIEW -> overdue.add(word);
+                case NEW -> newWords.add(word);
+                case NOT_DUE -> notDue.add(word);
             }
         }
-        Collections.shuffle(due);
+        Collections.shuffle(overdue);
+        Collections.shuffle(newWords);
         Collections.shuffle(notDue);
 
-        List<Word> selected = new ArrayList<>(due.subList(0, Math.min(WORDS_PER_SESSION, due.size())));
-        if (selected.size() < WORDS_PER_SESSION) {
-            int remaining = WORDS_PER_SESSION - selected.size();
-            selected.addAll(notDue.subList(0, Math.min(remaining, notDue.size())));
-        }
+        // 復習期限切れの単語を最優先し、次に新規、最後に期限内の単語で埋める。
+        List<Word> selected = new ArrayList<>();
+        fillUpTo(selected, overdue, WORDS_PER_SESSION);
+        fillUpTo(selected, newWords, WORDS_PER_SESSION);
+        fillUpTo(selected, notDue, WORDS_PER_SESSION);
         Collections.shuffle(selected);
         return selected;
+    }
+
+    private void fillUpTo(List<Word> target, List<Word> source, int limit) {
+        int remaining = limit - target.size();
+        if (remaining > 0) {
+            target.addAll(source.subList(0, Math.min(remaining, source.size())));
+        }
     }
 
     public List<LevelReviewSummaryDto> getReviewSummary(Long userId) {
@@ -122,7 +131,8 @@ public class QuizService {
                 : -masteryCalculator.calculateLoss(similarity);
         int after = masteryCalculator.applyDelta(before, delta);
 
-        Rating rating = fsrsScheduler.review(masteryRow, wordId, correct, after);
+        double hintPenalty = masteryCalculator.totalPenalty(hintsUsed);
+        Rating rating = fsrsScheduler.review(masteryRow, wordId, correct, hintPenalty);
 
         masteryRow.setMastery(after);
         masteryRow.setAttempts(masteryRow.getAttempts() + 1);
