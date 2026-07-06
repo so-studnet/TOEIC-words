@@ -104,6 +104,7 @@
   let currentIndex = 0;
   let currentWord = null;
   let hintsUsed = new Set();
+  let answered = false;
 
   document.querySelectorAll('.level-btn').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -137,10 +138,14 @@
   function startQuestion() {
     currentWord = sessionWords[currentIndex];
     hintsUsed = new Set();
+    answered = false;
     document.getElementById('quiz-progress').textContent = `${currentIndex + 1}問目/${sessionWords.length}問`;
     document.getElementById('quiz-hint-count').textContent = `ヒント使用:0/5`;
     document.getElementById('quiz-example').textContent = currentWord.example;
-    document.getElementById('quiz-answer').value = '';
+    const answerInput = document.getElementById('quiz-answer');
+    answerInput.value = '';
+    answerInput.disabled = false;
+    document.querySelector('#quiz-form button[type=submit]').disabled = false;
     document.getElementById('quiz-error').textContent = '';
     document.getElementById('hint-content').innerHTML = '';
     document.querySelectorAll('.hint-btn').forEach((b) => b.classList.remove('used'));
@@ -207,8 +212,13 @@
     }
   }
 
+  function revealAllHints() {
+    ['definition', 'synonyms', 'pronunciation', 'shuffle', 'image'].forEach(renderHint);
+  }
+
   document.getElementById('quiz-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (answered) return;
     const answerInput = document.getElementById('quiz-answer');
     const answer = answerInput.value.trim();
     const errorEl = document.getElementById('quiz-error');
@@ -217,6 +227,12 @@
       errorEl.textContent = '解答を入力してください。';
       return;
     }
+
+    answered = true;
+    answerInput.disabled = true;
+    document.querySelector('#quiz-form button[type=submit]').disabled = true;
+
+    revealAllHints();
 
     const localSimilarity = calculateSimilarity(answer, currentWord.word);
     showResult({
