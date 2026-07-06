@@ -30,6 +30,21 @@ public class UserWordMastery {
     @Column(name = "last_studied")
     private String lastStudied;
 
+    @Column(name = "fsrs_state")
+    private String fsrsState;
+
+    @Column(name = "fsrs_step")
+    private Integer fsrsStep;
+
+    @Column(name = "fsrs_stability")
+    private Double fsrsStability;
+
+    @Column(name = "fsrs_difficulty")
+    private Double fsrsDifficulty;
+
+    @Column(name = "due_at")
+    private String dueAt;
+
     public Long getUser() { return user; }
     public void setUser(Long user) { this.user = user; }
 
@@ -50,4 +65,19 @@ public class UserWordMastery {
 
     public String getLastStudied() { return lastStudied; }
     public void setLastStudied(String lastStudied) { this.lastStudied = lastStudied; }
+
+    public String getFsrsState() { return fsrsState; }
+    public void setFsrsState(String fsrsState) { this.fsrsState = fsrsState; }
+
+    public Integer getFsrsStep() { return fsrsStep; }
+    public void setFsrsStep(Integer fsrsStep) { this.fsrsStep = fsrsStep; }
+
+    public Double getFsrsStability() { return fsrsStability; }
+    public void setFsrsStability(Double fsrsStability) { this.fsrsStability = fsrsStability; }
+
+    public Double getFsrsDifficulty() { return fsrsDifficulty; }
+    public void setFsrsDifficulty(Double fsrsDifficulty) { this.fsrsDifficulty = fsrsDifficulty; }
+
+    public String getDueAt() { return dueAt; }
+    public void setDueAt(String dueAt) { this.dueAt = dueAt; }
 }
