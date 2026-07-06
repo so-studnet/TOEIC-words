@@ -148,6 +148,7 @@
     document.querySelector('#quiz-form button[type=submit]').disabled = false;
     document.getElementById('quiz-error').textContent = '';
     document.getElementById('hint-content').innerHTML = '';
+    document.getElementById('result-hint-content').innerHTML = '';
     document.querySelectorAll('.hint-btn').forEach((b) => b.classList.remove('used'));
     document.getElementById('result-overlay').classList.add('hidden');
   }
@@ -162,8 +163,8 @@
     });
   });
 
-  function renderHint(key) {
-    const container = document.getElementById('hint-content');
+  function renderHint(key, containerId = 'hint-content') {
+    const container = document.getElementById(containerId);
     const box = document.createElement('div');
     box.className = 'hint-item';
     switch (key) {
@@ -213,7 +214,8 @@
   }
 
   function revealAllHints() {
-    ['definition', 'synonyms', 'pronunciation', 'shuffle', 'image'].forEach(renderHint);
+    ['definition', 'synonyms', 'pronunciation', 'shuffle', 'image']
+      .forEach((key) => renderHint(key, 'result-hint-content'));
   }
 
   document.getElementById('quiz-form').addEventListener('submit', async (e) => {
