@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 
 /**
- * Part1 詳細設計書 §2.6: 習熟度スコアをAnki(FSRS)評価に変換し、
+ * Part1 詳細設計書 §2.6: 今回の解答で使ったヒント量をAnki(FSRS)評価に変換し、
  * 公式FSRSライブラリ(io.github.open-spaced-repetition:fsrs)で次回復習日時を算出する。
  */
 @Component
@@ -18,24 +18,22 @@ public class FsrsScheduler {
 
     private final Scheduler scheduler = Scheduler.builder().build();
 
-    public Rating ratingFor(boolean correct, int masteryAfter) {
+    private static final double GOOD_MAX_PENALTY = 0.30;
+
+    /** 今回の解答で使ったヒントの量(累積の習熟度スコアではない)を基準に評価する。 */
+    public Rating ratingFor(boolean correct, double hintPenalty) {
         if (!correct) return Rating.AGAIN;
-        if (masteryAfter == 100) return Rating.EASY;
-        if (masteryAfter >= 80) return Rating.GOOD;
-        if (masteryAfter >= 50) return Rating.HARD;
-        return Rating.AGAIN;
+        if (hintPenalty <= 0) return Rating.EASY;
+        if (hintPenalty <= GOOD_MAX_PENALTY) return Rating.GOOD;
+        return Rating.HARD;
     }
 
-    public Rating review(UserWordMastery masteryRow, Long wordId, boolean correct, int masteryAfter) {
-        Rating rating = ratingFor(correct, masteryAfter);
+    public Rating review(UserWordMastery masteryRow, Long wordId, boolean correct, double hintPenalty) {
+        Rating rating = ratingFor(correct, hintPenalty);
         Card card = toCard(masteryRow, wordId);
         Card updated = scheduler.reviewCard(card, rating).card();
         applyCard(masteryRow, updated);
         return rating;
-    }
-
-    public boolean isDue(UserWordMastery masteryRow, Instant now) {
-        return categorize(masteryRow, now) != DueCategory.NOT_DUE;
     }
 
     /** Anki風の3区分(New/Learning/Review)+未期限(NOT_DUE)への分類。 */

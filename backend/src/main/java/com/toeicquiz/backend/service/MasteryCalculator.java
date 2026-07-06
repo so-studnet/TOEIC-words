@@ -17,10 +17,14 @@ public class MasteryCalculator {
     private static final double MAX_HINT_PENALTY = 0.8;
 
     public int calculateGain(Set<HintType> hintsUsed) {
-        double totalPenalty = hintsUsed.stream().mapToDouble(HintType::getPenalty).sum();
-        totalPenalty = Math.min(totalPenalty, MAX_HINT_PENALTY);
+        double totalPenalty = totalPenalty(hintsUsed);
         // add a small epsilon to guard against floating-point rounding before flooring
         return (int) Math.floor(BASE_GAIN * (1 - totalPenalty) + 1e-9);
+    }
+
+    public double totalPenalty(Set<HintType> hintsUsed) {
+        double totalPenalty = hintsUsed.stream().mapToDouble(HintType::getPenalty).sum();
+        return Math.min(totalPenalty, MAX_HINT_PENALTY);
     }
 
     public int calculateLoss(int similarityPercent) {
