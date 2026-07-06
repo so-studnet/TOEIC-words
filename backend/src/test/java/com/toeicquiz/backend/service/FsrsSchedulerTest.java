@@ -50,6 +50,29 @@ class FsrsSchedulerTest {
     }
 
     @Test
+    void neverStudiedWordCategorizesAsNew() {
+        assertEquals(FsrsScheduler.DueCategory.NEW, scheduler.categorize(null, Instant.now()));
+    }
+
+    @Test
+    void categorizeReflectsLearningAndReviewStates() {
+        UserWordMastery learningRow = new UserWordMastery();
+        learningRow.setUser(1L);
+        learningRow.setWord(3L);
+        scheduler.review(learningRow, 3L, true, 20); // AGAIN -> stays in LEARNING, due ~1 minute later
+        assertEquals(FsrsScheduler.DueCategory.LEARNING,
+                scheduler.categorize(learningRow, Instant.now().plus(java.time.Duration.ofMinutes(2))));
+
+        UserWordMastery reviewRow = new UserWordMastery();
+        reviewRow.setUser(1L);
+        reviewRow.setWord(4L);
+        scheduler.review(reviewRow, 4L, true, 100); // EASY -> graduates straight to REVIEW, due weeks out
+        assertEquals(FsrsScheduler.DueCategory.NOT_DUE, scheduler.categorize(reviewRow, Instant.now()));
+        assertEquals(FsrsScheduler.DueCategory.REVIEW,
+                scheduler.categorize(reviewRow, Instant.now().plus(java.time.Duration.ofDays(60))));
+    }
+
+    @Test
     void reviewingNewWordFillsFsrsFieldsAndSchedulesDueDate() {
         UserWordMastery row = new UserWordMastery();
         row.setUser(1L);

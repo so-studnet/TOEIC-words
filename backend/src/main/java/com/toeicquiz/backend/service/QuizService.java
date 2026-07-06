@@ -4,6 +4,7 @@ import com.toeicquiz.backend.domain.HintType;
 import com.toeicquiz.backend.domain.UserWordMastery;
 import com.toeicquiz.backend.domain.Word;
 import com.toeicquiz.backend.dto.AnswerResponse;
+import com.toeicquiz.backend.dto.LevelReviewSummaryDto;
 import com.toeicquiz.backend.repository.UserWordMasteryRepository;
 import com.toeicquiz.backend.repository.WordRepository;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,6 +68,32 @@ public class QuizService {
         }
         Collections.shuffle(selected);
         return selected;
+    }
+
+    public List<LevelReviewSummaryDto> getReviewSummary(Long userId) {
+        Map<Long, UserWordMastery> masteryByWordId = masteryRepository.findByUser(userId).stream()
+                .collect(Collectors.toMap(UserWordMastery::getWord, Function.identity()));
+        Instant now = Instant.now();
+
+        return wordRepository.findAll().stream()
+                .collect(Collectors.groupingBy(Word::getLevel))
+                .entrySet().stream()
+                .map(entry -> {
+                    int newCount = 0;
+                    int learningCount = 0;
+                    int reviewCount = 0;
+                    for (Word word : entry.getValue()) {
+                        switch (fsrsScheduler.categorize(masteryByWordId.get(word.getId()), now)) {
+                            case NEW -> newCount++;
+                            case LEARNING -> learningCount++;
+                            case REVIEW -> reviewCount++;
+                            case NOT_DUE -> { }
+                        }
+                    }
+                    return new LevelReviewSummaryDto(entry.getKey(), newCount, learningCount, reviewCount);
+                })
+                .sorted(Comparator.comparingInt(LevelReviewSummaryDto::getLevel))
+                .toList();
     }
 
     public AnswerResponse submitAnswer(Long userId, Long wordId, String answer, Set<String> hintKeys) {

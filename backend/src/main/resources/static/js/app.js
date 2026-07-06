@@ -20,6 +20,36 @@
     document.getElementById(id).classList.add('active');
   }
 
+  function formatDueAt(dueAt) {
+    if (!dueAt) return '未学習(復習可能)';
+    const due = new Date(dueAt);
+    if (due.getTime() <= Date.now()) return '復習可能';
+    return due.toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function goHome() {
+    showScreen('screen-home');
+    await loadReviewSummary();
+  }
+
+  async function loadReviewSummary() {
+    try {
+      const data = await api.getReviewSummary();
+      document.querySelectorAll('.level-counts').forEach((el) => {
+        const level = Number(el.dataset.levelCounts);
+        const summary = data.levels.find((l) => l.level === level) || { newCount: 0, learningCount: 0, reviewCount: 0 };
+        el.innerHTML = `
+          <span class="count-badge count-new">New ${summary.newCount}</span>
+          <span class="count-badge count-learning">Learning ${summary.learningCount}</span>
+          <span class="count-badge count-review">Review ${summary.reviewCount}</span>
+        `;
+      });
+    } catch (err) {
+      // レベル選択自体は継続して使えるようにし、件数表示のみ諦める
+      document.querySelectorAll('.level-counts').forEach((el) => { el.textContent = ''; });
+    }
+  }
+
   // ---- S0: ログイン / 新規登録 ----
   document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -38,7 +68,7 @@
     errorEl.textContent = '';
     try {
       await api.login(email, password);
-      showScreen('screen-home');
+      await goHome();
     } catch (err) {
       errorEl.textContent = errorMessage(err);
     }
@@ -58,7 +88,7 @@
     try {
       await api.register(email, password);
       await api.login(email, password);
-      showScreen('screen-home');
+      await goHome();
     } catch (err) {
       errorEl.textContent = errorMessage(err);
     }
@@ -100,7 +130,7 @@
   });
 
   document.getElementById('back-home-btn').addEventListener('click', () => {
-    showScreen('screen-home');
+    goHome();
   });
 
   // ---- S2: クイズ画面 ----
@@ -231,7 +261,7 @@
     if (currentIndex < sessionWords.length) {
       startQuestion();
     } else {
-      showScreen('screen-home');
+      goHome();
     }
   });
 
@@ -260,7 +290,10 @@
         const row = document.createElement('div');
         row.className = 'mastery-row';
         row.innerHTML = `
-          <span>${w.word}(Lv.${w.level})</span>
+          <span>
+            ${w.word}(Lv.${w.level})
+            <span class="mastery-due">次回復習: ${formatDueAt(w.dueAt)}</span>
+          </span>
           <span class="mastery-rank ${rankClass[w.rank] || ''}">${w.rank} ${w.mastery}</span>
         `;
         const detail = document.createElement('div');
@@ -270,6 +303,7 @@
           <p>類義語: ${w.synonyms.join(', ')}</p>
           <p>例文: ${w.example}</p>
           <p>挑戦回数: ${w.attempts} / 正解回数: ${w.correctCount} / ヒント使用累計: ${w.hintsUsedTotal}</p>
+          <p>次回復習日: ${formatDueAt(w.dueAt)}</p>
         `;
         row.addEventListener('click', () => detail.classList.toggle('hidden'));
         listEl.appendChild(row);

@@ -25,6 +25,7 @@
     getWords: (level) => request('GET', `/api/words?level=${level}`),
     submitAnswer: (wordId, answer, hintsUsed) =>
       request('POST', '/api/quiz/answer', { wordId, answer, hintsUsed: Array.from(hintsUsed) }),
-    getMastery: (level) => request('GET', `/api/mastery${level ? `?level=${level}` : ''}`)
+    getMastery: (level) => request('GET', `/api/mastery${level ? `?level=${level}` : ''}`),
+    getReviewSummary: () => request('GET', '/api/review-summary')
   };
 })(window);

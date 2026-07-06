@@ -12,12 +12,13 @@ public class MasteryDto {
     private int correctCount;
     private int hintsUsedTotal;
     private String lastStudied;
+    private String dueAt;
     private String definition;
     private String example;
     private List<String> synonyms;
 
     public MasteryDto(Long wordId, String word, int level, int mastery, String rank,
-                       int attempts, int correctCount, int hintsUsedTotal, String lastStudied,
+                       int attempts, int correctCount, int hintsUsedTotal, String lastStudied, String dueAt,
                        String definition, String example, List<String> synonyms) {
         this.wordId = wordId;
         this.word = word;
@@ -28,6 +29,7 @@ public class MasteryDto {
         this.correctCount = correctCount;
         this.hintsUsedTotal = hintsUsedTotal;
         this.lastStudied = lastStudied;
+        this.dueAt = dueAt;
         this.definition = definition;
         this.example = example;
         this.synonyms = synonyms;
@@ -42,6 +44,7 @@ public class MasteryDto {
     public int getCorrectCount() { return correctCount; }
     public int getHintsUsedTotal() { return hintsUsedTotal; }
     public String getLastStudied() { return lastStudied; }
+    public String getDueAt() { return dueAt; }
     public String getDefinition() { return definition; }
     public String getExample() { return example; }
     public List<String> getSynonyms() { return synonyms; }

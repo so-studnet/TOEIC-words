@@ -1,7 +1,7 @@
 # 詳細設計書 Part 2:DB・API仕様 — 英単語穴埋めクイズWebアプリ
 
-- 版数:v1.2
-- 作成日:2026-07-05(v1.1改訂:2026-07-06 / v1.2改訂:2026-07-06 FSRS復習サイクル追加)
+- 版数:v1.3
+- 作成日:2026-07-05(v1.1改訂:2026-07-06 / v1.2改訂:2026-07-06 FSRS復習サイクル追加 / v1.3改訂:2026-07-06 次回復習日・件数サマリーAPI追加)
 - 前提ドキュメント:要件定義書 v1.3 / 基本設計書 v1.0 / 詳細設計書 Part1 v1.0
 
 ---
@@ -175,13 +175,37 @@ Response(200)
       "attempts": 3,
       "correctCount": 1,
       "hintsUsedTotal": 4,
-      "lastStudied": "2026-07-05T10:15:00Z"
+      "lastStudied": "2026-07-05T10:15:00Z",
+      "dueAt": "2026-07-06T10:15:00Z"
     }
   ]
 }
 ```
 
 `rank` はPart1 §2.5のランク表示ロジックをバックエンドで適用して返す(80〜100:マスター / 40〜79:学習中 / 1〜39:うろ覚え / 0:未学習)。
+`dueAt` は1-3節のFSRS次回復習予定日時(未レビューの場合はNULL=常に復習可能)。フロントエンドの単語一覧画面(S4)で「次回復習日」として表示する。
+
+### 2.7 GET /api/review-summary
+
+認証必須。全レベルについて、現在復習可能(=出題対象)な単語数をNew/Learning/Reviewの3区分で集計して返す。ホーム画面(S1)のレベルボタンに表示するバッジ用。
+
+Response(200)
+```json
+{
+  "levels": [
+    { "level": 400, "newCount": 49, "learningCount": 2, "reviewCount": 5 },
+    { "level": 600, "newCount": 50, "learningCount": 0, "reviewCount": 0 },
+    { "level": 800, "newCount": 50, "learningCount": 0, "reviewCount": 0 },
+    { "level": 900, "newCount": 50, "learningCount": 0, "reviewCount": 0 }
+  ]
+}
+```
+
+区分の定義(Part1 §2.6・FsrsSchedulerの`DueCategory`と対応):
+- `newCount`: 一度もレビューしていない単語(`fsrs_state`がNULL)
+- `learningCount`: `fsrs_state`がLEARNING/RELEARNINGで、かつ`due_at`が現在時刻以前(=復習可能)
+- `reviewCount`: `fsrs_state`がREVIEWで、かつ`due_at`が現在時刻以前(=復習可能)
+- `due_at`が現在時刻より未来の単語(まだ復習期限が来ていない)はどの区分にも含めない
 
 ## 3. 決定事項(確認済み)
 

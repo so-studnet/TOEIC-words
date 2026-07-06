@@ -41,12 +41,13 @@ public class MasteryService {
                     int correctCount = m == null ? 0 : m.getCorrectCount();
                     int hintsUsedTotal = m == null ? 0 : m.getHintsUsedTotal();
                     String lastStudied = m == null ? null : m.getLastStudied();
+                    String dueAt = m == null ? null : m.getDueAt();
                     List<String> synonyms = word.getSynonyms() == null || word.getSynonyms().isBlank()
                             ? List.of()
                             : Arrays.stream(word.getSynonyms().split(",")).map(String::trim).toList();
                     return new MasteryDto(word.getId(), word.getWord(), word.getLevel(),
                             mastery, masteryCalculator.rankOf(mastery),
-                            attempts, correctCount, hintsUsedTotal, lastStudied,
+                            attempts, correctCount, hintsUsedTotal, lastStudied, dueAt,
                             word.getDefinition(), word.getExample(), synonyms);
                 })
                 .toList();

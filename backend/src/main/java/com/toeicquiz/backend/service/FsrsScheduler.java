@@ -34,11 +34,24 @@ public class FsrsScheduler {
     }
 
     public boolean isDue(UserWordMastery masteryRow, Instant now) {
-        if (masteryRow == null || masteryRow.getDueAt() == null) {
-            return true;
-        }
-        return !Instant.parse(masteryRow.getDueAt()).isAfter(now);
+        return categorize(masteryRow, now) != DueCategory.NOT_DUE;
     }
+
+    /** Anki風の3区分(New/Learning/Review)+未期限(NOT_DUE)への分類。 */
+    public DueCategory categorize(UserWordMastery masteryRow, Instant now) {
+        if (masteryRow == null || masteryRow.getFsrsState() == null) {
+            return DueCategory.NEW;
+        }
+        if (Instant.parse(masteryRow.getDueAt()).isAfter(now)) {
+            return DueCategory.NOT_DUE;
+        }
+        return switch (State.valueOf(masteryRow.getFsrsState())) {
+            case REVIEW -> DueCategory.REVIEW;
+            case LEARNING, RELEARNING -> DueCategory.LEARNING;
+        };
+    }
+
+    public enum DueCategory { NEW, LEARNING, REVIEW, NOT_DUE }
 
     private Card toCard(UserWordMastery row, Long wordId) {
         Card.Builder builder = Card.builder().cardId(wordId.intValue());
