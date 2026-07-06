@@ -10,8 +10,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,19 +27,45 @@ public class QuizService {
     private final UserWordMasteryRepository masteryRepository;
     private final SimilarityCalculator similarityCalculator;
     private final MasteryCalculator masteryCalculator;
+    private final FsrsScheduler fsrsScheduler;
 
     public QuizService(WordRepository wordRepository,
                         UserWordMasteryRepository masteryRepository,
                         SimilarityCalculator similarityCalculator,
-                        MasteryCalculator masteryCalculator) {
+                        MasteryCalculator masteryCalculator,
+                        FsrsScheduler fsrsScheduler) {
         this.wordRepository = wordRepository;
         this.masteryRepository = masteryRepository;
         this.similarityCalculator = similarityCalculator;
         this.masteryCalculator = masteryCalculator;
+        this.fsrsScheduler = fsrsScheduler;
     }
 
-    public List<Word> getWordsForLevel(int level) {
-        return wordRepository.findRandomByLevel(level, WORDS_PER_SESSION);
+    public List<Word> getWordsForLevel(Long userId, int level) {
+        List<Word> words = wordRepository.findByLevel(level);
+        Map<Long, UserWordMastery> masteryByWordId = masteryRepository.findByUser(userId).stream()
+                .collect(Collectors.toMap(UserWordMastery::getWord, Function.identity()));
+
+        Instant now = Instant.now();
+        List<Word> due = new ArrayList<>();
+        List<Word> notDue = new ArrayList<>();
+        for (Word word : words) {
+            if (fsrsScheduler.isDue(masteryByWordId.get(word.getId()), now)) {
+                due.add(word);
+            } else {
+                notDue.add(word);
+            }
+        }
+        Collections.shuffle(due);
+        Collections.shuffle(notDue);
+
+        List<Word> selected = new ArrayList<>(due.subList(0, Math.min(WORDS_PER_SESSION, due.size())));
+        if (selected.size() < WORDS_PER_SESSION) {
+            int remaining = WORDS_PER_SESSION - selected.size();
+            selected.addAll(notDue.subList(0, Math.min(remaining, notDue.size())));
+        }
+        Collections.shuffle(selected);
+        return selected;
     }
 
     public AnswerResponse submitAnswer(Long userId, Long wordId, String answer, Set<String> hintKeys) {
@@ -62,6 +92,8 @@ public class QuizService {
                 ? masteryCalculator.calculateGain(hintsUsed)
                 : -masteryCalculator.calculateLoss(similarity);
         int after = masteryCalculator.applyDelta(before, delta);
+
+        fsrsScheduler.review(masteryRow, wordId, correct, after);
 
         masteryRow.setMastery(after);
         masteryRow.setAttempts(masteryRow.getAttempts() + 1);

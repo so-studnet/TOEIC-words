@@ -2,7 +2,9 @@ package com.toeicquiz.backend.controller;
 
 import com.toeicquiz.backend.dto.WordDto;
 import com.toeicquiz.backend.dto.WordsResponse;
+import com.toeicquiz.backend.security.AppUserPrincipal;
 import com.toeicquiz.backend.service.QuizService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,8 +19,8 @@ public class WordController {
     }
 
     @GetMapping("/api/words")
-    public WordsResponse getWords(@RequestParam int level) {
-        var words = quizService.getWordsForLevel(level).stream().map(WordDto::from).toList();
+    public WordsResponse getWords(@RequestParam int level, @AuthenticationPrincipal AppUserPrincipal principal) {
+        var words = quizService.getWordsForLevel(principal.getId(), level).stream().map(WordDto::from).toList();
         return new WordsResponse(level, words);
     }
 }
