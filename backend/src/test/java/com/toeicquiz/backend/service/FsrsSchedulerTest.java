@@ -78,8 +78,9 @@ class FsrsSchedulerTest {
         row.setUser(1L);
         row.setWord(1L);
 
-        scheduler.review(row, 1L, true, 20);
+        Rating rating = scheduler.review(row, 1L, true, 20);
 
+        assertEquals(Rating.AGAIN, rating);
         assertNotNull(row.getFsrsState());
         assertNotNull(row.getFsrsStability());
         assertNotNull(row.getFsrsDifficulty());

@@ -26,11 +26,12 @@ public class FsrsScheduler {
         return Rating.AGAIN;
     }
 
-    public void review(UserWordMastery masteryRow, Long wordId, boolean correct, int masteryAfter) {
+    public Rating review(UserWordMastery masteryRow, Long wordId, boolean correct, int masteryAfter) {
         Rating rating = ratingFor(correct, masteryAfter);
         Card card = toCard(masteryRow, wordId);
         Card updated = scheduler.reviewCard(card, rating).card();
         applyCard(masteryRow, updated);
+        return rating;
     }
 
     public boolean isDue(UserWordMastery masteryRow, Instant now) {

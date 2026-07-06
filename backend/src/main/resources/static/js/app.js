@@ -223,8 +223,6 @@
       correct: localSimilarity === 100,
       similarityPercent: localSimilarity,
       correctWord: currentWord.word,
-      masteryBefore: null,
-      masteryAfter: null,
       pending: true
     });
 
@@ -232,7 +230,7 @@
       const res = await api.submitAnswer(currentWord.id, answer, hintsUsed);
       showResult({ ...res, pending: false });
     } catch (err) {
-      document.getElementById('result-mastery').textContent = errorMessage(err);
+      document.getElementById('result-rating').textContent = errorMessage(err);
     }
   });
 
@@ -244,6 +242,8 @@
     return 'ちがいます';
   }
 
+  const ratingLabels = { AGAIN: 'Again', HARD: 'Hard', GOOD: 'Good', EASY: 'Easy' };
+
   function showResult(result) {
     document.getElementById('result-overlay').classList.remove('hidden');
     document.getElementById('result-title').textContent = result.correct ? '正解!' : '不正解';
@@ -251,9 +251,9 @@
     document.getElementById('result-correct-word').textContent = result.correct ? '' : `正解: ${result.correctWord}`;
     document.getElementById('result-similarity').textContent =
       `類似度: ${result.similarityPercent}%(${similarityLabel(result.similarityPercent)})`;
-    document.getElementById('result-mastery').textContent = result.pending
-      ? '習熟度を更新中...'
-      : `習熟度 ${result.masteryBefore} → ${result.masteryAfter}(${result.masteryDelta >= 0 ? '+' : ''}${result.masteryDelta})`;
+    document.getElementById('result-rating').textContent = result.pending
+      ? '評価を計算中...'
+      : `評価: ${ratingLabels[result.ratingLabel] || result.ratingLabel} ・ 次回復習: ${formatDueAt(result.dueAt)}`;
   }
 
   document.getElementById('next-btn').addEventListener('click', () => {
