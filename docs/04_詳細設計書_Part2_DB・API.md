@@ -1,7 +1,7 @@
 # 詳細設計書 Part 2:DB・API仕様 — 英単語穴埋めクイズWebアプリ
 
-- 版数:v1.0(確定版)
-- 作成日:2026-07-05
+- 版数:v1.1
+- 作成日:2026-07-05(v1.1改訂:2026-07-06)
 - 前提ドキュメント:要件定義書 v1.3 / 基本設計書 v1.0 / 詳細設計書 Part1 v1.0
 
 ---
@@ -18,7 +18,7 @@ CREATE TABLE users (
 
 CREATE TABLE words (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    word       TEXT NOT NULL,
+    word       TEXT NOT NULL UNIQUE,
     level      INTEGER NOT NULL CHECK (level IN (400, 600, 800, 900)),
     definition TEXT NOT NULL,
     example    TEXT NOT NULL,   -- 対象単語部分は "_____" で保持
@@ -44,6 +44,16 @@ CREATE TABLE user_word_mastery (
 補足:
 - `words.word` はフロントエンドにも返却する(発音ヒントはブラウザの Web Speech API に単語テキストを渡して読み上げるため、フロント側で単語文字列を保持する必要があり、隠しても意味がないため)。
 - 正誤判定・習熟度計算は基本設計書どおりバックエンドで再計算し、フロントの申告を信用しない。
+- `word` にUNIQUE制約を付与し、単語マスタ投入処理(後述)を冪等にする。
+
+## 1-2. 単語マスタデータの投入方式
+
+単語マスタ(200語)はアプリケーション本体と切り離したJSONファイルではなく、`backend/src/main/resources/data.sql` にSQL(`INSERT OR IGNORE INTO words (...) VALUES (...);`)として同梱し、Spring Bootの初期化データ機構(`spring.jpa.defer-datasource-initialization=true` + `data.sql`自動実行)によってアプリ起動のたびにSQLiteへ直接投入する。
+
+- Hibernateが`words`テーブルを作成した**後**に`data.sql`が実行されるよう`spring.jpa.defer-datasource-initialization=true`を設定する。
+- SQLiteは組み込みDB(H2等)として自動検出されないため、`spring.sql.init.mode=always`を明示して`data.sql`を毎回実行させる。
+- `word`列のUNIQUE制約と`INSERT OR IGNORE`の組み合わせにより、起動の都度実行しても既存行は上書きされず、未投入の新規語のみが追加される(冪等)。
+- 単語マスタの追加・修正は`data.sql`を直接編集し、Gitでレビュー・履歴管理する。JSON経由の読み込み処理(旧`WordDataSeeder`)は廃止した。
 
 ## 2. API リクエスト/レスポンス仕様
 
