@@ -7,6 +7,7 @@ import com.toeicquiz.backend.dto.AnswerResponse;
 import com.toeicquiz.backend.dto.LevelReviewSummaryDto;
 import com.toeicquiz.backend.repository.UserWordMasteryRepository;
 import com.toeicquiz.backend.repository.WordRepository;
+import io.github.openspacedrepetition.Rating;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -121,7 +122,7 @@ public class QuizService {
                 : -masteryCalculator.calculateLoss(similarity);
         int after = masteryCalculator.applyDelta(before, delta);
 
-        fsrsScheduler.review(masteryRow, wordId, correct, after);
+        Rating rating = fsrsScheduler.review(masteryRow, wordId, correct, after);
 
         masteryRow.setMastery(after);
         masteryRow.setAttempts(masteryRow.getAttempts() + 1);
@@ -132,7 +133,7 @@ public class QuizService {
         masteryRow.setLastStudied(Instant.now().toString());
         masteryRepository.save(masteryRow);
 
-        return new AnswerResponse(correct, similarity, word.getWord(), before, after);
+        return new AnswerResponse(correct, similarity, word.getWord(), rating.name(), masteryRow.getDueAt());
     }
 
     private HintType parseHintKey(String key) {

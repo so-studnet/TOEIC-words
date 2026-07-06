@@ -1,7 +1,7 @@
 # 詳細設計書 Part 2:DB・API仕様 — 英単語穴埋めクイズWebアプリ
 
-- 版数:v1.3
-- 作成日:2026-07-05(v1.1改訂:2026-07-06 / v1.2改訂:2026-07-06 FSRS復習サイクル追加 / v1.3改訂:2026-07-06 次回復習日・件数サマリーAPI追加)
+- 版数:v1.4
+- 作成日:2026-07-05(v1.1改訂:2026-07-06 / v1.2改訂:2026-07-06 FSRS復習サイクル追加 / v1.3改訂:2026-07-06 次回復習日・件数サマリーAPI追加 / v1.4改訂:2026-07-06 解答結果レスポンスをratingLabel/dueAtに変更)
 - 前提ドキュメント:要件定義書 v1.3 / 基本設計書 v1.0 / 詳細設計書 Part1 v1.0
 
 ---
@@ -152,11 +152,14 @@ Response(200)
   "correct": false,
   "similarityPercent": 95,
   "correctWord": "comfortable",
-  "masteryBefore": 32,
-  "masteryAfter": 27,
-  "masteryDelta": -5
+  "ratingLabel": "HARD",
+  "dueAt": "2026-07-07T10:15:00Z"
 }
 ```
+
+備考:
+- 習熟度スコア自体(0〜100)はサーバー内部で引き続き計算・保存されるが(Part1 §2.1〜2.5)、レスポンスとしては返さない。フロントに返すのは、その習熟度スコアから導出したAnki評価(`ratingLabel`:`AGAIN`/`HARD`/`GOOD`/`EASY`、Part1 §2.6)と、それによって更新された次回復習予定日時(`dueAt`)のみ。
+- 数値の増減(旧`masteryBefore`/`masteryAfter`/`masteryDelta`)は廃止した。単語ごとの累計スコアはS4の単語一覧(Part2 §2.6)で確認する。
 
 エラー:`404 WORD_NOT_FOUND` / `400 INVALID_HINT_KEY`
 

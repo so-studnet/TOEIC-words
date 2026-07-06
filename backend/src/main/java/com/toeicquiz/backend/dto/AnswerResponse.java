@@ -4,24 +4,21 @@ public class AnswerResponse {
     private boolean correct;
     private int similarityPercent;
     private String correctWord;
-    private int masteryBefore;
-    private int masteryAfter;
-    private int masteryDelta;
+    private String ratingLabel;
+    private String dueAt;
 
     public AnswerResponse(boolean correct, int similarityPercent, String correctWord,
-                           int masteryBefore, int masteryAfter) {
+                           String ratingLabel, String dueAt) {
         this.correct = correct;
         this.similarityPercent = similarityPercent;
         this.correctWord = correctWord;
-        this.masteryBefore = masteryBefore;
-        this.masteryAfter = masteryAfter;
-        this.masteryDelta = masteryAfter - masteryBefore;
+        this.ratingLabel = ratingLabel;
+        this.dueAt = dueAt;
     }
 
     public boolean isCorrect() { return correct; }
     public int getSimilarityPercent() { return similarityPercent; }
     public String getCorrectWord() { return correctWord; }
-    public int getMasteryBefore() { return masteryBefore; }
-    public int getMasteryAfter() { return masteryAfter; }
-    public int getMasteryDelta() { return masteryDelta; }
+    public String getRatingLabel() { return ratingLabel; }
+    public String getDueAt() { return dueAt; }
 }
